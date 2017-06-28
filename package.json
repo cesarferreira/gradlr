@@ -1,9 +1,9 @@
 {
-  "name": "gradlr-cli",
+  "name": "gradlr",
   "version": "1.0.0",
-  "description": "Find gradle tasks to run.",
+  "description": "Because finding gradle task names should be a piece of cake",
   "license": "MIT",
-  "repository": "cesarferreira/gradlr-cli",
+  "repository": "cesarferreira/gradlr",
   "author": {
     "name": "Cesar Ferreira",
     "email": "cesar.manuel.ferreira@gmail.com",
@@ -16,7 +16,7 @@
     "node": ">=4"
   },
   "scripts": {
-    "test": "xo && ava"
+    "test": "ava"
   },
   "files": [
     "cli.js"
@@ -39,5 +39,15 @@
     "ava": "*",
     "execa": "^0.6.0",
     "xo": "*"
+  },
+  "xo": {
+    "semicolon": true,
+    "capitalized-comments": ["error", "never", {
+      "line": {
+        "ignorePattern": "pragma"
+      },
+			"ignoreInlineComments": true,
+			"ignoreConsecutiveComments": true
+		}]
   }
 }

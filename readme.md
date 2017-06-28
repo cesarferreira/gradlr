@@ -31,7 +31,7 @@ $ npm install -g gradlr
 $ gradlr --help
 
   Usage
-    $ gradlr [<pid|name> ...]
+    $ gradlr
 
   Options
     -f, --force    Force to re-index the tasks
@@ -39,7 +39,6 @@ $ gradlr --help
   Examples
     $ gradlr
     $ gradlr -f
-    $ gradlr -v
 ```
 
 

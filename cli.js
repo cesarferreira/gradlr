@@ -1,28 +1,26 @@
 #!/usr/bin/env node
 'use strict';
-const meow = require('meow');
+const fs = require('fs');
+const spawn = require('child_process').spawn;
+const exec = require('child_process').exec;
 const chalk = require('chalk');
 const inquirer = require('inquirer');
 const escExit = require('esc-exit');
 const cliTruncate = require('cli-truncate');
-const fs = require('fs');
-const path = require('path');
-const spawn = require('child_process').spawn;
-const exec = require('child_process').exec;
+const meow = require('meow');
 
 const SETTINGS_FILE_NAME = '.tasks.cache';
 
 const cli = meow(`
 	Usage
-		$ gradlr [<pid|name> ...]
+		$ gradlr
 
 	Options
 		-f, --force    Force to re-index the tasks
 
 	Examples
 		$ gradlr
-		$ gradlr -f
-		$ gradlr -v
+		$ gradlr --force
 
 	Run without arguments to use the interactive interface.
 `, {
@@ -42,65 +40,65 @@ function init(flags) {
 }
 
 function getTasks() {
-	var taskPromise = new Promise(
-		function (resolve, reject) {
-			readSettings()
-					.then(success => resolve(success))
-					.catch(function (error) {
-						console.log('Parsing tasks...');
-						var child = exec("gradle -q tasks --all", function (error, stdout, stderr) {
-							var items = stdout.split('\n');
-							var array = [];
-							items.forEach(item => {
-								if (item.substring(0, 15).includes(':')) {
-									var separation = item.split(' - ');
-									var name = separation[0];
-									var description = separation.length == 2 ? separation[1] : "";
-									array.push({ name , description });
-								}
-							})
-
-							// save 
-							writeSettings(array)
-								.then(data => resolve(data));
+	const taskPromise = new Promise(resolve => {
+		readSettings()
+				.then(success => resolve(success))
+				.catch(() => {
+					console.log('Parsing tasks...');
+					exec('gradle -q tasks --all', (error, stdout) => {
+						const items = stdout.split('\n');
+						const array = [];
+						items.forEach(item => {
+							if (item.substring(0, 15).includes(':')) {
+								const separation = item.split(' - ');
+								const name = separation[0];
+								const description = separation.length === 2 ? separation[1] : '';
+								array.push({name, description});
+							}
 						});
+						// save
+						saveSettings(array)
+							.then(data => resolve(data));
 					});
-		}
-	);
+				});
+	});
 	return taskPromise;
 }
 
-function writeSettings(data) {
-	return new Promise(function(resolve, reject) {
-		fs.writeFile(`${SETTINGS_FILE_NAME}.json`, JSON.stringify(data), 'utf-8', function(err) {
-			if (err) { reject(err);
-		} else {resolve(data);}
+function saveSettings(data) {
+	return new Promise((resolve, reject) => {
+		fs.writeFile(`${SETTINGS_FILE_NAME}.json`, JSON.stringify(data), 'utf-8', err => {
+			if (err) {
+				reject(err);
+			} else {
+				resolve(data);
+			}
 		});
 	});
 }
 
 function readSettings() {
-	return new Promise(function(resolve, reject) {
-		fs.readFile(`${SETTINGS_FILE_NAME}.json`, 'utf-8', function(err, data) {
+	return new Promise((resolve, reject) => {
+		fs.readFile(`${SETTINGS_FILE_NAME}.json`, 'utf-8', (err, data) => {
 			if (err) {
 				reject(err);
 			} else {
 				promisedParseJSON(data)
-					.then(data =>resolve(data))
-				  	.catch(error => reject(error));
+					.then(data => resolve(data))
+					.catch(err => reject(err));
 			}
 		});
 	});
 }
 
 function promisedParseJSON(json) {
-    return new Promise((resolve, reject) => {
-        try {
-            resolve(JSON.parse(json));
-        } catch (e) {
-            reject(e);
-        }
-    });
+	return new Promise((resolve, reject) => {
+		try {
+			resolve(JSON.parse(json));
+		} catch (err) {
+			reject(err);
+		}
+	});
 }
 
 function listAvailableTasks(processes, flags) {
@@ -115,21 +113,9 @@ function listAvailableTasks(processes, flags) {
 	.then(answer => execute(answer));
 }
 
-// function isValidGradleProject() {
-// 	var path = process.cwd();
-// 	// ver se tem 'build.gradle' aqui, se nao tiver cancela
-	
-// }
-
-// function areOfflineTasksAvailable() {
-// 	if (fs.existsSync(path)) {
-// 		// Do something
-// 	}
-// }
-
 function execute(task) {
 	console.log(task.target);
-	spawn('./gradlew', [task.target], { stdio: 'inherit' });
+	spawn('./gradlew', [task.target], {stdio: 'inherit'});
 }
 
 function filterTasks(input, tasks, flags) {
@@ -147,7 +133,6 @@ function filterTasks(input, tasks, flags) {
 			const margins = commandLineMargins + proc.description.toString().length;
 			const length = lineLength - margins;
 			const name = cliTruncate(proc.name, length, {position: 'middle'});
-
 			return {
 				name: `${name} ${chalk.dim(proc.description)}`,
 				value: proc.name
@@ -158,5 +143,5 @@ function filterTasks(input, tasks, flags) {
 if (cli.input.length === 0) {
 	init(cli.flags);
 } else {
-	// fkill(cli.input, cli.flags); //.catch(() => handleMainError(cli.input));
+	// cena(cli.input, cli.flags); //.catch(() => handleMainError(cli.input));
 }
