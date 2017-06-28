@@ -36,7 +36,13 @@ const commandLineMargins = 4;
 
 function init(flags) {
 	escExit();
-	return getTasks().then(procs => listAvailableTasks(procs, flags));
+	return getTasks()
+		.then(tasks => listAvailableTasks(tasks, flags))
+		.catch((err) => {
+			console.log(chalk.red(err));
+			process.exit();
+		});
+
 }
 
 function isValidGradleProject() {
@@ -44,12 +50,12 @@ function isValidGradleProject() {
 }
 
 function getTasks() {
-	const taskPromise = new Promise(resolve => {
+	const taskPromise = new Promise((resolve, reject) => {
 		readSettings()
 				.then(success => resolve(success))
 				.catch(() => {
 					console.log('Parsing tasks...');
-					exec('gradle -q tasks --all', (error, stdout) => {
+					exec('./gradlew -q tasks --all', (error, stdout) => {
 						const lines = stdout.split('\n');
 						const items = [];
 						lines.forEach(item => {
@@ -63,14 +69,19 @@ function getTasks() {
 							}
 						});
 
-						const toPersist = {
-							timestamp: Date.now(),
-							payload: items.sort(keysrt('name'))
-						}
+						if (items.length === 0) {
+							reject('Unable to get tasks: '+error);
+						} else {
 
-						// save
-						saveSettings(toPersist)
-							.then(data => resolve(data.payload));
+							const toPersist = {
+								timestamp: Date.now(),
+								payload: items.sort(keysrt('name'))
+							}
+
+							// save
+							saveSettings(toPersist)
+								.then(data => resolve(data.payload));
+						}
 					});
 				});
 	});
