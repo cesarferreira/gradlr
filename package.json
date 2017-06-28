@@ -15,7 +15,9 @@
   "engines": {
     "node": ">=4"
   },
-  "scripts": {},
+  "scripts": {
+    "test": "xo && ava"
+  },
   "files": [
     "cli.js"
   ],
@@ -33,5 +35,9 @@
     "inquirer-autocomplete-prompt": "^0.7.0",
     "meow": "^3.3.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "ava": "*",
+    "execa": "^0.6.0",
+    "xo": "*"
+  }
 }
