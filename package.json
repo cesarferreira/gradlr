@@ -1,0 +1,37 @@
+{
+  "name": "gradlr-cli",
+  "version": "1.0.0",
+  "description": "Find gradle tasks to run.",
+  "license": "MIT",
+  "repository": "cesarferreira/gradlr-cli",
+  "author": {
+    "name": "Cesar Ferreira",
+    "email": "cesar.manuel.ferreira@gmail.com",
+    "url": "cesarferreira.com"
+  },
+  "bin": {
+    "gradlr": "cli.js"
+  },
+  "engines": {
+    "node": ">=4"
+  },
+  "scripts": {},
+  "files": [
+    "cli.js"
+  ],
+  "keywords": [
+    "cli-app",
+    "gradle",
+    "gradle tasks",
+    "search"
+  ],
+  "dependencies": {
+    "chalk": "^1.1.0",
+    "cli-truncate": "^1.0.0",
+    "esc-exit": "^1.0.0",
+    "inquirer": "^3.0.3",
+    "inquirer-autocomplete-prompt": "^0.7.0",
+    "meow": "^3.3.0"
+  },
+  "devDependencies": {}
+}
