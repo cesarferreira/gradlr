@@ -14,7 +14,7 @@
 <img src="extras/ss.png" width="100%" />
 </p>
 
-[![Build Status](https://travis-ci.org/sindresorhus/fkill-cli.svg?branch=master)](https://travis-ci.org/sindresorhus/fkill-cli)
+[![Build Status](https://travis-ci.org/cesarferreira/gradlr-cli.svg?branch=master)](https://travis-ci.org/cesarferreira/gradlr-cli)
 
 Works on macOS, Linux, and Windows.
 
