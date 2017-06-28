@@ -6,12 +6,11 @@ const inquirer = require('inquirer');
 const escExit = require('esc-exit');
 const cliTruncate = require('cli-truncate');
 const fs = require('fs');
-var path = require('path'); 
-var spawn = require('child_process').spawn;
-var exec = require('child_process').exec;
-var child;
+const path = require('path');
+const spawn = require('child_process').spawn;
+const exec = require('child_process').exec;
 
-const SETTINGS_FILE_NAME = '.tasks.cache'
+const SETTINGS_FILE_NAME = '.tasks.cache';
 
 const cli = meow(`
 	Usage
@@ -49,7 +48,7 @@ function getTasks() {
 					.then(success => resolve(success))
 					.catch(function (error) {
 						console.log('Parsing tasks...');
-						child = exec("gradle -q tasks --all", function (error, stdout, stderr) {
+						var child = exec("gradle -q tasks --all", function (error, stdout, stderr) {
 							var items = stdout.split('\n');
 							var array = [];
 							items.forEach(item => {
@@ -74,8 +73,8 @@ function getTasks() {
 function writeSettings(data) {
 	return new Promise(function(resolve, reject) {
 		fs.writeFile(`${SETTINGS_FILE_NAME}.json`, JSON.stringify(data), 'utf-8', function(err) {
-			if (err) reject(err);
-			else resolve(data);
+			if (err) { reject(err);
+		} else {resolve(data);}
 		});
 	});
 }
@@ -97,11 +96,11 @@ function readSettings() {
 function promisedParseJSON(json) {
     return new Promise((resolve, reject) => {
         try {
-            resolve(JSON.parse(json))
+            resolve(JSON.parse(json));
         } catch (e) {
-            reject(e)
+            reject(e);
         }
-    })
+    });
 }
 
 function listAvailableTasks(processes, flags) {
@@ -116,17 +115,17 @@ function listAvailableTasks(processes, flags) {
 	.then(answer => execute(answer));
 }
 
-function isValidGradleProject() {
-	var path = process.cwd();
-	// todo ver se tem 'build.gradle' aqui, se nao tiver cancela
+// function isValidGradleProject() {
+// 	var path = process.cwd();
+// 	// ver se tem 'build.gradle' aqui, se nao tiver cancela
 	
-}
+// }
 
-function areOfflineTasksAvailable() {
-	if (fs.existsSync(path)) {
-		// Do something
-	}
-}
+// function areOfflineTasksAvailable() {
+// 	if (fs.existsSync(path)) {
+// 		// Do something
+// 	}
+// }
 
 function execute(task) {
 	console.log(task.target);
@@ -159,5 +158,5 @@ function filterTasks(input, tasks, flags) {
 if (cli.input.length === 0) {
 	init(cli.flags);
 } else {
-	fkill(cli.input, cli.flags); //.catch(() => handleMainError(cli.input));
+	// fkill(cli.input, cli.flags); //.catch(() => handleMainError(cli.input));
 }
