@@ -7,14 +7,14 @@
 </h1>-->
 
 # Gradlr
-> Because finding gradle task names should be as easy as pie
+> Because finding gradle task names should be a piece of cake
 
 
 <p align="center">
 <img src="extras/ss.png" width="100%" />
 </p>
 
-[![Build Status](https://travis-ci.org/sindresorhus/fkill-cli.svg?branch=master)](https://travis-ci.org/sindresorhus/fkill-cli)
+[![Build Status](https://travis-ci.org/cesarferreira/gradlr.svg?branch=master)](https://travis-ci.org/cesarferreira/gradlr)
 
 Works on macOS, Linux, and Windows.
 
@@ -22,7 +22,7 @@ Works on macOS, Linux, and Windows.
 ## Install
 
 ```
-$ npm install --global gradlr-cli
+$ npm install -g gradlr
 ```
 
 ## Usage
@@ -31,7 +31,7 @@ $ npm install --global gradlr-cli
 $ gradlr --help
 
   Usage
-    $ gradlr [<pid|name> ...]
+    $ gradlr
 
   Options
     -f, --force    Force to re-index the tasks
@@ -39,7 +39,6 @@ $ gradlr --help
   Examples
     $ gradlr
     $ gradlr -f
-    $ gradlr -v
 ```
 
 
