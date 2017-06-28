@@ -66,7 +66,7 @@ function getTasks() {
 
 						// save
 						saveSettings(toPersist)
-							.then(data => resolve(data));
+							.then(data => resolve(data.payload));
 					});
 				});
 	});
