@@ -46,18 +46,26 @@ function getTasks() {
 				.catch(() => {
 					console.log('Parsing tasks...');
 					exec('gradle -q tasks --all', (error, stdout) => {
-						const items = stdout.split('\n');
-						const array = [];
-						items.forEach(item => {
+						const lines = stdout.split('\n');
+						const items = [];
+						lines.forEach(item => {
 							if (item.substring(0, 15).includes(':')) {
 								const separation = item.split(' - ');
 								const name = separation[0];
 								const description = separation.length === 2 ? separation[1] : '';
-								array.push({name, description});
+								if (description !== '') {
+									items.push({name, description});
+								}
 							}
 						});
+
+						const toPersist = {
+							timestamp: Date.now(),
+							payload: items.sort(keysrt('name'))
+						}
+
 						// save
-						saveSettings(array)
+						saveSettings(toPersist)
 							.then(data => resolve(data));
 					});
 				});
@@ -66,6 +74,7 @@ function getTasks() {
 }
 
 function saveSettings(data) {
+
 	return new Promise((resolve, reject) => {
 		fs.writeFile(`${SETTINGS_FILE_NAME}.json`, JSON.stringify(data), 'utf-8', err => {
 			if (err) {
@@ -84,7 +93,7 @@ function readSettings() {
 				reject(err);
 			} else {
 				promisedParseJSON(data)
-					.then(data => resolve(data))
+					.then(data => resolve(data.payload))
 					.catch(err => reject(err));
 			}
 		});
@@ -107,35 +116,41 @@ function listAvailableTasks(processes, flags) {
 		name: 'target',
 		message: 'Available tasks:',
 		type: 'autocomplete',
-		pageSize: 10,
+		pageSize: 15,
 		source: (answers, input) => Promise.resolve().then(() => filterTasks(input, processes, flags))
 	}])
 	.then(answer => execute(answer));
 }
 
 function execute(task) {
-	console.log(task.target);
+	console.log(`Running: ${chalk.green(task.target)}`);
 	spawn('./gradlew', [task.target], {stdio: 'inherit'});
+}
+
+function keysrt(key) {
+	return function(a, b) {
+		if (a[key] > b[key]) return 1;
+		if (a[key] < b[key]) return -1;
+		return 0;
+	}
 }
 
 function filterTasks(input, tasks, flags) {
 	const filters = {
-		name: proc => input ? proc.name.toLowerCase().includes(input.toLowerCase()) : true,
-		verbose: proc => input ? proc.description.toLowerCase().includes(input.toLowerCase()) : true
+		name: task => input ? task.name.toLowerCase().includes(input.toLowerCase()) : true,
+		description: task => input ? task.description.toLowerCase().includes(input.toLowerCase()) : true
 	};
 
 	return tasks
-		.filter(flags.verbose ? filters.verbose : filters.name)
-		// ordenar por quem tem descricao em cima
-		// nomes mais curtos em cima?
-		.map(proc => {
+		.filter(flags.description ? filters.description : filters.name)
+		.map(task => {
 			const lineLength = process.stdout.columns || 80;
-			const margins = commandLineMargins + proc.description.toString().length;
+			const margins = commandLineMargins + task.description.toString().length;
 			const length = lineLength - margins;
-			const name = cliTruncate(proc.name, length, {position: 'middle'});
+			const name = cliTruncate(task.name, length, {position: 'middle'});
 			return {
-				name: `${name} ${chalk.dim(proc.description)}`,
-				value: proc.name
+				name: `${name} ${chalk.dim(task.description)}`,
+				value: task.name
 			};
 		});
 }
