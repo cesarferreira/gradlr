@@ -39,6 +39,10 @@ function init(flags) {
 	return getTasks().then(procs => listAvailableTasks(procs, flags));
 }
 
+function isValidGradleProject() {
+	return fs.existsSync('build.gradle')
+}
+
 function getTasks() {
 	const taskPromise = new Promise(resolve => {
 		readSettings()
@@ -153,6 +157,15 @@ function filterTasks(input, tasks, flags) {
 				value: task.name
 			};
 		});
+}
+
+
+
+// Main Code
+
+if (!isValidGradleProject()) {
+	console.log(chalk.red.bgBlack('This is not a valid gradle project'));
+	process.exit()
 }
 
 if (cli.input.length === 0) {
