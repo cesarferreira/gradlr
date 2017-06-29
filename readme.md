@@ -16,7 +16,7 @@
 
 [![Build Status](https://travis-ci.org/cesarferreira/gradlr.svg?branch=master)](https://travis-ci.org/cesarferreira/gradlr)
 
-Works on macOS, Linux, and Windows.
+<!--Works on macOS, Linux, and Windows.-->
 
 
 ## Install
