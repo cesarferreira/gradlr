@@ -7,11 +7,11 @@
 </h1>-->
 
 # Gradlr
-> Because finding gradle task names should be a piece of cake
+> Fastest way to run your gradle tasks
 
 
 <p align="center">
-<img src="extras/ss.png" width="100%" />
+<img src="extras/action.gif" width="100%" />
 </p>
 
 [![Build Status](https://travis-ci.org/cesarferreira/gradlr.svg?branch=master)](https://travis-ci.org/cesarferreira/gradlr)

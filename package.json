@@ -1,6 +1,6 @@
 {
   "name": "gradlr",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Because finding gradle task names should be a piece of cake",
   "license": "MIT",
   "repository": "cesarferreira/gradlr",
