@@ -9,7 +9,7 @@ const inquirer = require('inquirer');
 const escExit = require('esc-exit');
 const cliTruncate = require('cli-truncate');
 const meow = require('meow');
-const FileHound = require('filehound');
+const fileHound = require('filehound');
 const md5File = require('md5-file');
 const ora = require('ora');
 const updateNotifier = require('update-notifier');
@@ -74,7 +74,7 @@ function isGradleDirty(previousChecksum) {
 	return getChecksumOfGradleFiles('.').then(checksum => previousChecksum !== checksum);
 }
 
-function generateTasksJSON() {
+function getTasksFromCache() {
 	return new Promise((resolve, reject) => {
 		const spinner = ora({
 			color: 'yellow',
@@ -84,7 +84,6 @@ function generateTasksJSON() {
 		exec('./gradlew -q tasks --all', (error, stdout) => {
 			spinner.stop();
 			const items = parseGradleTasks(stdout);
-
 			if (items.length === 0) {
 				reject(error);
 			} else {
@@ -111,7 +110,7 @@ function getTasks() {
 						.then(isItDirty => {
 							if (isItDirty) {
 								resetConfig();
-								generateTasksJSON()
+								getTasksFromCache()
 									.then(data => resolve(data))
 									.catch(err => reject(err));
 							} else {
@@ -120,7 +119,7 @@ function getTasks() {
 						});
 				})
 				.catch(() => {
-					generateTasksJSON()
+					getTasksFromCache()
 						.then(data => resolve(data))
 						.catch(err => reject(err));
 				});
@@ -192,7 +191,7 @@ function resetConfig() {
 }
 
 function getChecksumOfGradleFiles(path) {
-	return FileHound.create()
+	return fileHound.create()
 		.paths(path)
 		.ext('gradle')
 		.ignoreHiddenDirectories()
