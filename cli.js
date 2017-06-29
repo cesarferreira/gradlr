@@ -8,6 +8,9 @@ const inquirer = require('inquirer');
 const escExit = require('esc-exit');
 const cliTruncate = require('cli-truncate');
 const meow = require('meow');
+const FileHound = require('filehound');
+const crypto = require('crypto');
+const md5File = require('md5-file')
 
 const SETTINGS_FILE_NAME = '.tasks.cache';
 
@@ -42,54 +45,83 @@ function init(flags) {
 			console.log(chalk.red(err));
 			process.exit();
 		});
-
 }
 
 function isValidGradleProject() {
 	return fs.existsSync('build.gradle')
 }
 
+function parseGradleTasks(stdout) {
+	const lines = stdout.split('\n');
+	const items = [];
+	lines.forEach(item => {
+		if (item.substring(0, 15).includes(':')) {
+			const separation = item.split(' - ');
+			const name = separation[0];
+			const description = separation.length === 2 ? separation[1] : '';
+			items.push({name, description});
+		}
+	});
+
+	return items;
+}
+
+function isGradleDirty(previousChecksum) {
+	return getChecksumOfGradleFiles('.')
+		.then(checksum =>  previousChecksum !== checksum);
+}
+
+
+function generateTasksJSON() {
+	return new Promise((resolve, reject) => {
+		console.log(`Parsing tasks... ${chalk.dim('might take some time')}`); // Get some loading animation? (from NP package)
+		exec('./gradlew -q tasks --all', (error, stdout) => {
+			const items = parseGradleTasks(stdout);
+
+			if (items.length === 0) {
+				reject(`Unable to get tasks: ${error}`);
+			} else {
+				getChecksumOfGradleFiles('.')
+					.then(checksum => {
+						saveSettings({
+							timestamp: Date.now(),
+							generatedWith: 'https://github.com/cesarferreira/gradlr',
+							checksum,
+							payload: items.sort(keysrt('name'))
+						})
+						.then(data => resolve(data.payload));
+				});
+			}
+		});
+	});
+}
+
 function getTasks() {
-	const taskPromise = new Promise((resolve, reject) => {
+	return new Promise((resolve, reject) => {
 		readSettings()
-				.then(success => resolve(success))
+				.then(settings => {
+					isGradleDirty(settings.checksum)
+						.then(isItDirty => {
+
+							if (isItDirty) {
+								resetConfig();
+								generateTasksJSON()
+									.then(data => resolve(data))
+									.catch(err => reject(err));
+							} else {
+								resolve(settings.payload)
+							}
+						} )
+				})
 				.catch(() => {
-					console.log('Parsing tasks...');
-					exec('./gradlew -q tasks --all', (error, stdout) => {
-						const lines = stdout.split('\n');
-						const items = [];
-						lines.forEach(item => {
-							if (item.substring(0, 15).includes(':')) {
-								const separation = item.split(' - ');
-								const name = separation[0];
-								const description = separation.length === 2 ? separation[1] : '';
-								if (description !== '') {
-									items.push({name, description});
-								}
-							}
-						});
-
-						if (items.length === 0) {
-							reject('Unable to get tasks: '+error);
-						} else {
-
-							const toPersist = {
-								timestamp: Date.now(),
-								payload: items.sort(keysrt('name'))
-							}
-
-							// save
-							saveSettings(toPersist)
-								.then(data => resolve(data.payload));
-						}
-					});
+					generateTasksJSON()
+						.then(data => resolve(data))
+						.catch(err => reject(err));
 				});
 	});
-	return taskPromise;
 }
 
 function saveSettings(data) {
-
 	return new Promise((resolve, reject) => {
 		fs.writeFile(`${SETTINGS_FILE_NAME}.json`, JSON.stringify(data), 'utf-8', err => {
 			if (err) {
@@ -108,7 +140,7 @@ function readSettings() {
 				reject(err);
 			} else {
 				promisedParseJSON(data)
-					.then(data => resolve(data.payload))
+					.then(data => resolve(data))
 					.catch(err => reject(err));
 			}
 		});
@@ -138,8 +170,33 @@ function listAvailableTasks(processes, flags) {
 }
 
 function execute(task) {
-	console.log(`Running: ${chalk.green(task.target)}`);
+	console.log(`Running: ${chalk.green(task.target)}\n`);
 	spawn('./gradlew', [task.target], {stdio: 'inherit'});
+}
+
+function checksum(str, algorithm, encoding) {
+    return crypto
+        .createHash(algorithm || 'md5')
+        .update(str, 'utf8')
+        .digest(encoding || 'hex')
+}
+
+function resetConfig() {
+	fs.unlinkSync(`${SETTINGS_FILE_NAME}.json`);
+}
+
+function getChecksumOfGradleFiles(path) {
+	return FileHound.create()
+		.paths('.')
+		.ext('gradle')
+		.ignoreHiddenDirectories()
+		.depth(3)
+		.find()
+		.then(files => {
+			var mix = '';
+			files.forEach(file => mix += md5File.sync(file));
+			return checksum(mix);
+		});
 }
 
 function keysrt(key) {
@@ -169,8 +226,6 @@ function filterTasks(input, tasks, flags) {
 			};
 		});
 }
-
-
 
 // Main Code
 

@@ -31,8 +31,10 @@
     "chalk": "^1.1.0",
     "cli-truncate": "^1.0.0",
     "esc-exit": "^1.0.0",
+    "filehound": "^1.16.1",
     "inquirer": "^3.0.3",
     "inquirer-autocomplete-prompt": "^0.7.0",
+    "md5-file": "^3.1.1",
     "meow": "^3.3.0"
   },
   "devDependencies": {
