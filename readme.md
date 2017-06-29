@@ -15,7 +15,7 @@
 </p>
 
 [![Build Status](https://travis-ci.org/cesarferreira/gradlr.svg?branch=master)](https://travis-ci.org/cesarferreira/gradlr)
-[![npm](https://img.shields.io/npm/dt/express.svg)](https://www.npmjs.com/package/gradlr)
+[![npm](https://img.shields.io/npm/dt/gradlr.svg)](https://www.npmjs.com/package/gradlr)
 [![npm](https://img.shields.io/npm/v/gradlr.svg)](https://www.npmjs.com/package/gradlr)
 
 ## Install
