@@ -1,6 +1,6 @@
 {
   "name": "gradlr",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Because finding gradle task names should be a piece of cake",
   "license": "MIT",
   "repository": "cesarferreira/gradlr",
@@ -32,6 +32,7 @@
     "cli-truncate": "^1.0.0",
     "esc-exit": "^1.0.0",
     "filehound": "^1.16.1",
+    "has-flag": "^2.0.0",
     "inquirer": "^3.0.3",
     "inquirer-autocomplete-prompt": "^0.7.0",
     "md5-file": "^3.1.1",
