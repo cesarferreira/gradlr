@@ -13,6 +13,7 @@ const fileHound = require('filehound');
 const md5File = require('md5-file');
 const ora = require('ora');
 const updateNotifier = require('update-notifier');
+const hasFlag = require('has-flag');
 const pkg = require('./package.json');
 
 updateNotifier({pkg}).notify();
@@ -33,10 +34,12 @@ const cli = meow(`
 	Run without arguments to use the interactive interface.
 `, {
 	alias: {
-		f: 'force'
+		f: 'force',
+		v: 'version'
 	},
 	boolean: [
-		'force'
+		'force',
+		'version'
 	]
 });
 
@@ -240,14 +243,15 @@ function filterTasks(input, tasks, flags) {
 
 // Main Code
 
+const force = hasFlag('-f') || hasFlag('--force');
+
 if (!isValidGradleProject()) {
 	console.log(chalk.red.bgBlack('This is not a valid gradle project'));
 	process.exit();
 }
 
-if (cli.input.length === 0) {
-	init(cli.flags);
-} else {
-	console.log(cli.input);
-	console.log(cli.flags);
+if (force) {
+	resetConfig();
 }
+
+init(cli.flags);
