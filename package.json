@@ -1,6 +1,6 @@
 {
   "name": "gradlr",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Because finding gradle task names should be a piece of cake",
   "license": "MIT",
   "repository": "cesarferreira/gradlr",
@@ -16,7 +16,7 @@
     "node": ">=4"
   },
   "scripts": {
-    "test": "ava"
+    "test": "xo && ava"
   },
   "files": [
     "cli.js"
@@ -35,7 +35,9 @@
     "inquirer": "^3.0.3",
     "inquirer-autocomplete-prompt": "^0.7.0",
     "md5-file": "^3.1.1",
-    "meow": "^3.3.0"
+    "meow": "^3.3.0",
+    "ora": "^1.3.0",
+    "update-notifier": "^2.2.0"
   },
   "devDependencies": {
     "ava": "*",

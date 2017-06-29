@@ -3,14 +3,19 @@
 const fs = require('fs');
 const spawn = require('child_process').spawn;
 const exec = require('child_process').exec;
+const crypto = require('crypto');
 const chalk = require('chalk');
 const inquirer = require('inquirer');
 const escExit = require('esc-exit');
 const cliTruncate = require('cli-truncate');
 const meow = require('meow');
-const FileHound = require('filehound');
-const crypto = require('crypto');
-const md5File = require('md5-file')
+const fileHound = require('filehound');
+const md5File = require('md5-file');
+const ora = require('ora');
+const updateNotifier = require('update-notifier');
+const pkg = require('./package.json');
+
+updateNotifier({pkg}).notify();
 
 const SETTINGS_FILE_NAME = '.tasks.cache';
 
@@ -41,14 +46,14 @@ function init(flags) {
 	escExit();
 	return getTasks()
 		.then(tasks => listAvailableTasks(tasks, flags))
-		.catch((err) => {
+		.catch(err => {
 			console.log(chalk.red(err));
 			process.exit();
 		});
 }
 
 function isValidGradleProject() {
-	return fs.existsSync('build.gradle')
+	return fs.existsSync('build.gradle');
 }
 
 function parseGradleTasks(stdout) {
@@ -62,24 +67,25 @@ function parseGradleTasks(stdout) {
 			items.push({name, description});
 		}
 	});
-
 	return items;
 }
 
 function isGradleDirty(previousChecksum) {
-	return getChecksumOfGradleFiles('.')
-		.then(checksum =>  previousChecksum !== checksum);
+	return getChecksumOfGradleFiles('.').then(checksum => previousChecksum !== checksum);
 }
 
-
-function generateTasksJSON() {
+function getTasksFromCache() {
 	return new Promise((resolve, reject) => {
-		console.log(`Parsing tasks... ${chalk.dim('might take some time')}`); // Get some loading animation? (from NP package)
-		exec('./gradlew -q tasks --all', (error, stdout) => {
-			const items = parseGradleTasks(stdout);
+		const spinner = ora({
+			color: 'yellow',
+			text: 'Parsing gradle tasks...'
+		}).start();
 
+		exec('./gradlew -q tasks --all', (error, stdout) => {
+			spinner.stop();
+			const items = parseGradleTasks(stdout);
 			if (items.length === 0) {
-				reject(`Unable to get tasks: ${error}`);
+				reject(error);
 			} else {
 				getChecksumOfGradleFiles('.')
 					.then(checksum => {
@@ -90,7 +96,7 @@ function generateTasksJSON() {
 							payload: items.sort(keysrt('name'))
 						})
 						.then(data => resolve(data.payload));
-				});
+					});
 			}
 		});
 	});
@@ -102,19 +108,18 @@ function getTasks() {
 				.then(settings => {
 					isGradleDirty(settings.checksum)
 						.then(isItDirty => {
-
 							if (isItDirty) {
 								resetConfig();
-								generateTasksJSON()
+								getTasksFromCache()
 									.then(data => resolve(data))
 									.catch(err => reject(err));
 							} else {
-								resolve(settings.payload)
+								resolve(settings.payload);
 							}
-						} )
+						});
 				})
 				.catch(() => {
-					generateTasksJSON()
+					getTasksFromCache()
 						.then(data => resolve(data))
 						.catch(err => reject(err));
 				});
@@ -175,10 +180,10 @@ function execute(task) {
 }
 
 function checksum(str, algorithm, encoding) {
-    return crypto
-        .createHash(algorithm || 'md5')
-        .update(str, 'utf8')
-        .digest(encoding || 'hex')
+	return crypto
+		.createHash(algorithm || 'md5')
+		.update(str, 'utf8')
+		.digest(encoding || 'hex');
 }
 
 function resetConfig() {
@@ -186,25 +191,31 @@ function resetConfig() {
 }
 
 function getChecksumOfGradleFiles(path) {
-	return FileHound.create()
-		.paths('.')
+	return fileHound.create()
+		.paths(path)
 		.ext('gradle')
 		.ignoreHiddenDirectories()
 		.depth(3)
 		.find()
 		.then(files => {
-			var mix = '';
-			files.forEach(file => mix += md5File.sync(file));
+			let mix = '';
+			files.forEach(file => {
+				mix += md5File.sync(file);
+			});
 			return checksum(mix);
 		});
 }
 
 function keysrt(key) {
-	return function(a, b) {
-		if (a[key] > b[key]) return 1;
-		if (a[key] < b[key]) return -1;
+	return function (a, b) {
+		if (a[key] > b[key]) {
+			return 1;
+		}
+		if (a[key] < b[key]) {
+			return -1;
+		}
 		return 0;
-	}
+	};
 }
 
 function filterTasks(input, tasks, flags) {
@@ -231,11 +242,12 @@ function filterTasks(input, tasks, flags) {
 
 if (!isValidGradleProject()) {
 	console.log(chalk.red.bgBlack('This is not a valid gradle project'));
-	process.exit()
+	process.exit();
 }
 
 if (cli.input.length === 0) {
 	init(cli.flags);
 } else {
-	// cena(cli.input, cli.flags); //.catch(() => handleMainError(cli.input));
+	console.log(cli.input);
+	console.log(cli.flags);
 }
