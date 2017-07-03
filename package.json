@@ -28,7 +28,7 @@
     "search"
   ],
   "dependencies": {
-    "chalk": "^1.1.0",
+    "chalk": "^2.0.1",
     "cli-truncate": "^1.0.0",
     "esc-exit": "^1.0.0",
     "filehound": "^1.16.1",

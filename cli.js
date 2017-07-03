@@ -15,6 +15,7 @@ const ora = require('ora');
 const updateNotifier = require('update-notifier');
 const hasFlag = require('has-flag');
 const pkg = require('./package.json');
+const log = console.log;
 
 updateNotifier({pkg}).notify();
 
@@ -25,20 +26,24 @@ const cli = meow(`
 		$ gradlr
 
 	Options
+		-o, --offline  Execute the build without accessing network resources
 		-f, --force    Force to re-index the tasks
 
 	Examples
 		$ gradlr
 		$ gradlr --force
+		$ gradlr --offline
 
 	Run without arguments to use the interactive interface.
 `, {
 	alias: {
 		f: 'force',
+		o: 'offline',
 		v: 'version'
 	},
 	boolean: [
 		'force',
+		'offline',
 		'version'
 	]
 });
@@ -178,8 +183,12 @@ function listAvailableTasks(processes, flags) {
 }
 
 function execute(task) {
-	console.log(`Running: ${chalk.green(task.target)}\n`);
-	spawn('./gradlew', [task.target], {stdio: 'inherit'});
+	const params = [task.target];
+	if (offline) {
+		params.push('--offline');
+	}
+	log(`Running: ${chalk.green.bold(task.target)}\n`);
+	spawn('./gradlew', params, {stdio: 'inherit'});
 }
 
 function checksum(str, algorithm, encoding) {
@@ -244,6 +253,7 @@ function filterTasks(input, tasks, flags) {
 // Main Code
 
 const force = hasFlag('-f') || hasFlag('--force');
+const offline = hasFlag('-o') || hasFlag('--offline');
 
 if (!isValidGradleProject()) {
 	console.log(chalk.red.bgBlack('This is not a valid gradle project'));
