@@ -15,6 +15,7 @@ const ora = require('ora');
 const updateNotifier = require('update-notifier');
 const hasFlag = require('has-flag');
 const pkg = require('./package.json');
+
 const log = console.log;
 
 updateNotifier({pkg}).notify();
@@ -49,6 +50,25 @@ const cli = meow(`
 });
 
 const commandLineMargins = 4;
+
+// =======================
+// Main Code
+
+const force = hasFlag('-f') || hasFlag('--force');
+const offline = hasFlag('-o') || hasFlag('--offline');
+
+if (!isValidGradleProject()) {
+	console.log(chalk.red.bgBlack('This is not a valid gradle project'));
+	process.exit();
+}
+
+if (force) {
+	resetConfig();
+}
+
+init(cli.flags);
+
+// =======================
 
 function init(flags) {
 	escExit();
@@ -176,7 +196,7 @@ function listAvailableTasks(processes, flags) {
 		name: 'target',
 		message: 'Available tasks:',
 		type: 'autocomplete',
-		pageSize: 15,
+		pageSize: 10,
 		source: (answers, input) => Promise.resolve().then(() => filterTasks(input, processes, flags))
 	}])
 	.then(answer => execute(answer));
@@ -187,7 +207,7 @@ function execute(task) {
 	if (offline) {
 		params.push('--offline');
 	}
-	log(`Running: ${chalk.green.bold(task.target)}\n`);
+	log(`Running: ${chalk.green.bold(params.join(' '))}\n`);
 	spawn('./gradlew', params, {stdio: 'inherit'});
 }
 
@@ -249,19 +269,3 @@ function filterTasks(input, tasks, flags) {
 			};
 		});
 }
-
-// Main Code
-
-const force = hasFlag('-f') || hasFlag('--force');
-const offline = hasFlag('-o') || hasFlag('--offline');
-
-if (!isValidGradleProject()) {
-	console.log(chalk.red.bgBlack('This is not a valid gradle project'));
-	process.exit();
-}
-
-if (force) {
-	resetConfig();
-}
-
-init(cli.flags);

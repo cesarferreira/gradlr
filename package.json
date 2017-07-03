@@ -1,7 +1,7 @@
 {
   "name": "gradlr",
   "version": "1.0.7",
-  "description": "Because finding gradle task names should be a piece of cake",
+  "description": "Fastest way to run your gradle tasks",
   "license": "MIT",
   "repository": "cesarferreira/gradlr",
   "author": {
