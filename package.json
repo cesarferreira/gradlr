@@ -1,6 +1,6 @@
 {
   "name": "gradlr",
-  "version": "1.0.7",
+  "version": "1.1.0",
   "description": "Fastest way to run your gradle tasks",
   "license": "MIT",
   "repository": "cesarferreira/gradlr",
