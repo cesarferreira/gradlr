@@ -18,7 +18,7 @@ $ npm install -g gradlr
 ## Usage
 
 ```
-$ gradlr --help
+$ gradlr
 	Usage
 		$ gradlr
 
@@ -31,16 +31,14 @@ $ gradlr --help
 		$ gradlr --force
 		$ gradlr --offline
 
-Run without arguments to use the interactive interface.
-
 ```
 
-## What happens?
-First time it runs it will cache tasks so the #2 time it'll be instant.
-How does it know it needs to re-index after you change something in any of the gradle files? The First time it's cached, this tool saves a checksum of the sum of checksums of all of the projects' gradle files, so it knows when you changed something and re-indexes when needed.
+## What happens under the hood?
+First time you run `gradlr` it will cache the gradle tasks so the #2 time it'll load them instantantly.
+How does it know it needs to re-index? When caching, this tool saves a checksum of the sum of checksums of all of the projects' gradle files (META!), so it knows when you changed something and re-indexes when needed.
 
-## Should I commit the `.tasks.cache` file?
-If you commit it, your collegues will not have to index the tasks again. omg, so cool amirite?
+## Should I commit the `.tasks.cache.json` file?
+If you commit it, your colleagues will not have to index the tasks again.
 
 ## Created by
 [Cesar Ferreira](https://cesarferreira.com)

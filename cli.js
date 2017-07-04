@@ -88,7 +88,7 @@ function parseGradleTasks(stdout) {
 	const lines = stdout.split('\n');
 	const items = [];
 	lines.forEach(item => {
-		if (item.substring(0, 15).includes(':')) {
+		if (item.substring(0, 25).includes(':')) {
 			const separation = item.split(' - ');
 			const name = separation[0];
 			const description = separation.length === 2 ? separation[1] : '';
