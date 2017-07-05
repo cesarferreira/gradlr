@@ -40,7 +40,7 @@ How does it know it needs to re-index? When caching, this tool saves a checksum 
 ## Should I commit the `.tasks.cache.json` file?
 If you commit it, your colleagues will not have to index the tasks again.
 
-### What terminal am I using?
+## What terminal am I using?
 Since a lot of people has been asking about my terminal setup, I made [this article](https://medium.com/@cesarmcferreira/what-terminal-am-i-using-cesar-ferreira-2e19e5f58fc5) explaining how to achieve it.
 
 ## Created by
