@@ -87,13 +87,41 @@ function isValidGradleProject() {
 function parseGradleTasks(stdout) {
 	const lines = stdout.split('\n');
 	const items = [];
-	lines.forEach(item => {
-		if (item.substring(0, 25).includes(':')) {
-			const separation = item.split(' - ');
-			const name = separation[0];
-			const description = separation.length === 2 ? separation[1] : '';
-			items.push({name, description});
+	const cleanseItems = [];
+	let startingPlace = -1;
+
+	lines.forEach((item, i) => {
+		if (startingPlace > -1 && i <= startingPlace) {
+			return;
 		}
+
+		if (item.startsWith('All tasks runnable from root project')) {
+			startingPlace = i + 4;
+			return;
+		}
+
+		if (startingPlace === -1) {
+			return;
+		}
+
+		if (/^\s*$/.test(item)) {
+			return;
+		}
+
+		const nextLineStartsWithDashes = lines[i + 1].startsWith('---');
+
+		if (item.startsWith('---') || nextLineStartsWithDashes) {
+			return;
+		}
+
+		cleanseItems.push(item);
+	});
+
+	cleanseItems.forEach(item => {
+		const separation = item.split(' - ');
+		const name = separation[0];
+		const description = separation.length === 2 ? separation[1] : '';
+		items.push({name, description});
 	});
 	return items;
 }
@@ -156,7 +184,7 @@ function getTasks() {
 
 function saveSettings(data) {
 	return new Promise((resolve, reject) => {
-		fs.writeFile(`${SETTINGS_FILE_NAME}.json`, JSON.stringify(data), 'utf-8', err => {
+		fs.writeFile(`${SETTINGS_FILE_NAME}.json`, JSON.stringify(data, null, 2), 'utf-8', err => {
 			if (err) {
 				reject(err);
 			} else {
