@@ -117,6 +117,21 @@ function parseGradleTasks(stdout) {
 		cleanseItems.push(item);
 	});
 
+	// Common missing items
+	cleanseItems.push('javadoc - Generates Javadoc API documentation for the main source code');
+	cleanseItems.push('test - Runs the unit tests.');
+	cleanseItems.push('check - Runs all checks');
+	cleanseItems.push('dependencies - Displays all dependencies declared in root project ');
+	cleanseItems.push('wrapper - Generates Gradle wrapper files.');
+	cleanseItems.push('assemble - Assembles the outputs of this project.');
+	cleanseItems.push('build - Assembles and tests this project.');
+	cleanseItems.push('buildDependents - Assembles and tests this project and all projects that depend on it.');
+	cleanseItems.push('buildNeeded - Assembles and tests this project and all projects it depends on.');
+	cleanseItems.push('classes - Assembles main classes.');
+	cleanseItems.push('clean - Deletes the build directory.');
+	cleanseItems.push('jar - Assembles a jar archive containing the main classes.');
+	cleanseItems.push('testClasses - Assembles test classes.');
+
 	cleanseItems.forEach(item => {
 		const separation = item.split(' - ');
 		const name = separation[0];
@@ -126,8 +141,9 @@ function parseGradleTasks(stdout) {
 	return items;
 }
 
-function isGradleDirty(previousChecksum) {
-	return getChecksumOfGradleFiles('.').then(checksum => previousChecksum !== checksum);
+function isCacheDirty(previousChecksum, previousGradlrVersion) {
+	return getChecksumOfGradleFiles('.')
+		.then(sum => previousChecksum !== sum || previousGradlrVersion !== pkg.version);
 }
 
 function getTasksFromCache() {
@@ -144,11 +160,12 @@ function getTasksFromCache() {
 				reject(error);
 			} else {
 				getChecksumOfGradleFiles('.')
-					.then(checksum => {
+					.then(sum => {
 						saveSettings({
 							timestamp: Date.now(),
 							generatedWith: 'https://github.com/cesarferreira/gradlr',
-							checksum,
+							checksum: sum,
+							gradlrVersion: pkg.version,
 							payload: items.sort(keysrt('name'))
 						})
 						.then(data => resolve(data.payload));
@@ -162,7 +179,7 @@ function getTasks() {
 	return new Promise((resolve, reject) => {
 		readSettings()
 				.then(settings => {
-					isGradleDirty(settings.checksum)
+					isCacheDirty(settings.checksum, settings.gradlrVersion)
 						.then(isItDirty => {
 							if (isItDirty) {
 								resetConfig();
@@ -184,7 +201,7 @@ function getTasks() {
 
 function saveSettings(data) {
 	return new Promise((resolve, reject) => {
-		fs.writeFile(`${SETTINGS_FILE_NAME}.json`, JSON.stringify(data, null, 2), 'utf-8', err => {
+		fs.writeFile(`${SETTINGS_FILE_NAME}.json`, JSON.stringify(data), 'utf-8', err => {
 			if (err) {
 				reject(err);
 			} else {
