@@ -20,7 +20,7 @@ const log = console.log;
 
 updateNotifier({pkg}).notify();
 
-const SETTINGS_FILE_NAME = '.tasks.cache';
+const SETTINGS_FILE_NAME = 'build/tasks.cache';
 
 const cli = meow(`
 	Usage
@@ -201,7 +201,7 @@ function getTasks() {
 
 function saveSettings(data) {
 	return new Promise((resolve, reject) => {
-		fs.writeFile(`${SETTINGS_FILE_NAME}.json`, JSON.stringify(data), 'utf-8', err => {
+		fs.writeFile(`${SETTINGS_FILE_NAME}.json`, JSON.stringify(data, null, 2), 'utf-8', err => {
 			if (err) {
 				reject(err);
 			} else {
