@@ -1,62 +1,62 @@
 {
-  "name": "gradlr",
-  "version": "1.3.0",
-  "description": "Fastest way to run your gradle tasks",
-  "license": "MIT",
-  "repository": "cesarferreira/gradlr",
-  "author": {
-    "name": "Cesar Ferreira",
-    "email": "cesar.manuel.ferreira@gmail.com",
-    "url": "cesarferreira.com"
-  },
-  "bin": {
-    "gradlr": "cli.js"
-  },
-  "engines": {
-    "node": ">=4"
-  },
-  "scripts": {
-    "test": "xo && ava"
-  },
-  "files": [
-    "cli.js"
-  ],
-  "keywords": [
-    "cli-app",
-    "gradle",
-    "gradle tasks",
-    "search"
-  ],
-  "dependencies": {
-    "chalk": "^2.4.1",
-    "cli-truncate": "^1.1.0",
-    "esc-exit": "^2.0.1",
-    "filehound": "^1.16.5",
-    "has-flag": "^3.0.0",
-    "inquirer": "^6.2.1",
-    "inquirer-autocomplete-prompt": "^1.0.1",
-    "md5-file": "^4.0.0",
-    "meow": "^5.0.0",
-    "ora": "^3.0.0",
-    "update-notifier": "^2.5.0"
-  },
-  "devDependencies": {
-    "ava": "^1.0.1",
-    "execa": "^1.0.0",
-    "xo": "^0.23.0"
-  },
-  "xo": {
-    "semicolon": true,
-    "capitalized-comments": [
-      "error",
-      "never",
-      {
-        "line": {
-          "ignorePattern": "pragma"
-        },
-        "ignoreInlineComments": true,
-        "ignoreConsecutiveComments": true
-      }
-    ]
-  }
+    "name": "gradlr",
+    "version": "1.3.0",
+    "description": "Fastest way to run your gradle tasks",
+    "license": "MIT",
+    "repository": "cesarferreira/gradlr",
+    "author": {
+        "name": "Cesar Ferreira",
+        "email": "cesar.manuel.ferreira@gmail.com",
+        "url": "cesarferreira.com"
+    },
+    "bin": {
+        "gradlr": "cli.js"
+    },
+    "engines": {
+        "node": ">=4"
+    },
+    "scripts": {
+        "test": "node test.js"
+    },
+    "files": [
+        "cli.js"
+    ],
+    "keywords": [
+        "cli-app",
+        "gradle",
+        "gradle tasks",
+        "search"
+    ],
+    "dependencies": {
+        "chalk": "^2.4.1",
+        "cli-truncate": "^1.1.0",
+        "esc-exit": "^2.0.1",
+        "filehound": "^1.16.5",
+        "has-flag": "^3.0.0",
+        "inquirer": "^6.2.1",
+        "inquirer-autocomplete-prompt": "^1.0.1",
+        "md5-file": "^4.0.0",
+        "meow": "^5.0.0",
+        "ora": "^3.0.0",
+        "update-notifier": "^2.5.0"
+    },
+    "devDependencies": {
+        "ava": "^1.0.1",
+        "execa": "^1.0.0",
+        "xo": "^0.23.0"
+    },
+    "xo": {
+        "semicolon": true,
+        "capitalized-comments": [
+            "error",
+            "never",
+            {
+                "line": {
+                    "ignorePattern": "pragma"
+                },
+                "ignoreInlineComments": true,
+                "ignoreConsecutiveComments": true
+            }
+        ]
+    }
 }
