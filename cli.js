@@ -28,19 +28,19 @@ const SETTINGS_FILE_NAME = "build/tasks.cache";
 
 const cli = meow(
 	`
-	Usage
-		$ gradlr
+    Usage
+        $ gradlr
 
-	Options
-		-o, --offline  Execute the build without accessing network resources
-		-f, --force    Force to re-index the tasks
+    Options
+        -o, --offline  Execute the build without accessing network resources
+        -f, --force    Force to re-index the tasks
 
-	Examples
-		$ gradlr
-		$ gradlr --force
-		$ gradlr --offline
+    Examples
+        $ gradlr
+        $ gradlr --force
+        $ gradlr --offline
 
-	Run without arguments to use the interactive interface.
+    Run without arguments to use the interactive interface.
 `,
 	{
 		importMeta: import.meta,
@@ -53,10 +53,7 @@ const cli = meow(
 	}
 );
 
-// Your code here
-log(cli.input, cli.flags);
-
-const commandLineMargins = 4;
+const commandLineMargins = 8;
 
 // =======================
 // Main Code
@@ -93,46 +90,40 @@ function isValidGradleProject() {
 
 function parseGradleTasks(stdout) {
 	const lines = stdout.split("\n");
-	let collectTasks = false;
-	const tasks = lines.reduce((acc, line, i) => {
-		if (line.startsWith("All tasks runnable from root project")) {
-			collectTasks = true;
-			return acc;
+	// console.log("Gradle tasks output:", lines); // Log the output lines
+	const tasks = [];
+	let inTaskSection = false;
+
+	lines.forEach((line) => {
+		// Start collecting tasks when the relevant section is reached
+		if (line.includes("Tasks runnable from")) {
+			inTaskSection = true;
+			return;
 		}
+
+		// Stop collecting tasks when the end of the relevant section is reached
+		if (line.includes("To see all tasks and more detail")) {
+			inTaskSection = false;
+			return;
+		}
+
+		// Collect tasks within the relevant section
 		if (
-			!collectTasks ||
-			/^\s*$/.test(line) ||
-			line.startsWith("---") ||
-			lines[i + 1]?.startsWith("---")
+			inTaskSection &&
+			line.trim() &&
+			!line.startsWith("---") &&
+			!/^[a-zA-Z ]+ tasks$/.test(line)
 		) {
-			return acc;
+			// Parse task name and description
+			const [name, description = ""] = line.split(" - ");
+			if (name && name.trim()) {
+				tasks.push({ name: name.trim(), description: description.trim() });
+			}
 		}
-		acc.push(line);
-		return acc;
-	}, []);
-
-	// Add common missing items directly
-	const commonTasks = [
-		"javadoc - Generates Javadoc API documentation for the main source code",
-		"test - Runs the unit tests.",
-		"check - Runs all checks",
-		"dependencies - Displays all dependencies declared in root project ",
-		"wrapper - Generates Gradle wrapper files.",
-		"assemble - Assembles the outputs of this project.",
-		"build - Assembles and tests this project.",
-		"buildDependents - Assembles and tests this project and all projects that depend on it.",
-		"buildNeeded - Assembles and tests this project and all projects it depends on.",
-		"classes - Assembles main classes.",
-		"clean - Deletes the build directory.",
-		"jar - Assembles a jar archive containing the main classes.",
-		"testClasses - Assembles test classes.",
-	];
-
-	// Combine and map to desired structure
-	return [...tasks, ...commonTasks].map((task) => {
-		const [name, description = ""] = task.split(" - ");
-		return { name, description };
 	});
+
+	// console.log("Parsed tasks:", tasks); // Log the parsed tasks
+	return tasks;
 }
 
 function isCacheDirty(previousChecksum, previousGradlrVersion) {
@@ -149,8 +140,9 @@ function getTasksFromCache() {
 		}).start();
 
 		exec("./gradlew tasks --console=plain", (error, stdout) => {
-			spinner.stop();
+			// console.log("Gradle command output:", stdout); // Log the raw output
 			const items = parseGradleTasks(stdout);
+			spinner.stop();
 			if (items.length === 0) {
 				reject(error);
 			} else {
@@ -242,10 +234,10 @@ function listAvailableTasks(processes, flags) {
 	return inquirer
 		.prompt([
 			{
-				name: "target",
-				message: "Available tasks:",
 				type: "autocomplete",
-				pageSize: 10,
+				name: "target",
+				message: "Which command do you want to run?",
+				pageSize: 15,
 				source: (answers, input) =>
 					Promise.resolve().then(() => filterTasks(input, processes, flags)),
 			},
