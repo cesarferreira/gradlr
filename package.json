@@ -7,14 +7,12 @@
     "author": {
         "name": "Cesar Ferreira",
         "email": "cesar.manuel.ferreira@gmail.com",
-        "url": "cesarferreira.com"
+        "url": "https://cesarferreira.com"
     },
     "bin": {
         "gradlr": "cli.js"
     },
-    "engines": {
-        "node": ">=4"
-    },
+    "type": "module",
     "scripts": {
         "test": "node test.js"
     },
@@ -36,27 +34,11 @@
         "inquirer": "^6.2.1",
         "inquirer-autocomplete-prompt": "^1.0.1",
         "md5-file": "^4.0.0",
-        "meow": "^5.0.0",
+        "meow": "^13.2.0",
         "ora": "^3.0.0",
-        "update-notifier": "^2.5.0"
+        "update-notifier": "^7.0.0"
     },
     "devDependencies": {
-        "ava": "^1.0.1",
-        "execa": "^1.0.0",
-        "xo": "^0.23.0"
-    },
-    "xo": {
-        "semicolon": true,
-        "capitalized-comments": [
-            "error",
-            "never",
-            {
-                "line": {
-                    "ignorePattern": "pragma"
-                },
-                "ignoreInlineComments": true,
-                "ignoreConsecutiveComments": true
-            }
-        ]
+        "execa": "^1.0.0"
     }
 }

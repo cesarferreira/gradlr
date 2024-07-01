@@ -1,28 +1,33 @@
 #!/usr/bin/env node
-'use strict';
-const fs = require('fs');
-const spawn = require('child_process').spawn;
-const exec = require('child_process').exec;
-const crypto = require('crypto');
-const chalk = require('chalk');
-const inquirer = require('inquirer');
-const escExit = require('esc-exit');
-const cliTruncate = require('cli-truncate');
-const meow = require('meow');
-const fileHound = require('filehound');
-const md5File = require('md5-file');
-const ora = require('ora');
-const updateNotifier = require('update-notifier');
-const hasFlag = require('has-flag');
-const pkg = require('./package.json');
+"use strict";
+
+import fs from "fs";
+import { spawn, exec } from "child_process";
+import crypto from "crypto";
+import chalk from "chalk";
+import inquirer from "inquirer";
+import escExit from "esc-exit";
+import cliTruncate from "cli-truncate";
+import meow from "meow";
+import fileHound from "filehound";
+import md5File from "md5-file";
+import ora from "ora";
+import updateNotifier from "update-notifier";
+import hasFlag from "has-flag";
+import { createRequire } from "module";
+
+// Since `pkg` is not an ES module, use `createRequire` to import it
+const require = createRequire(import.meta.url);
+const pkg = require("./package.json");
 
 const log = console.log;
 
-updateNotifier({pkg}).notify();
+updateNotifier({ pkg }).notify();
 
-const SETTINGS_FILE_NAME = 'build/tasks.cache';
+const SETTINGS_FILE_NAME = "build/tasks.cache";
 
-const cli = meow(`
+const cli = meow(
+	`
 	Usage
 		$ gradlr
 
@@ -36,29 +41,31 @@ const cli = meow(`
 		$ gradlr --offline
 
 	Run without arguments to use the interactive interface.
-`, {
-	alias: {
-		f: 'force',
-		o: 'offline',
-		v: 'version'
-	},
-	boolean: [
-		'force',
-		'offline',
-		'version'
-	]
-});
+`,
+	{
+		importMeta: import.meta,
+		alias: {
+			f: "force",
+			o: "offline",
+			v: "version",
+		},
+		boolean: ["force", "offline", "version"],
+	}
+);
+
+// Your code here
+log(cli.input, cli.flags);
 
 const commandLineMargins = 4;
 
 // =======================
 // Main Code
 
-const force = hasFlag('-f') || hasFlag('--force');
-const offline = hasFlag('-o') || hasFlag('--offline');
+const force = hasFlag("-f") || hasFlag("--force");
+const offline = hasFlag("-o") || hasFlag("--offline");
 
 if (!isValidGradleProject()) {
-	console.log(chalk.red.bgBlack('This is not a valid gradle project'));
+	console.log(chalk.red.bgBlack("This is not a valid gradle project"));
 	process.exit();
 }
 
@@ -73,103 +80,89 @@ init(cli.flags);
 function init(flags) {
 	escExit();
 	return getTasks()
-		.then(tasks => listAvailableTasks(tasks, flags))
-		.catch(err => {
+		.then((tasks) => listAvailableTasks(tasks, flags))
+		.catch((err) => {
 			console.log(chalk.red(err));
 			process.exit();
 		});
 }
 
 function isValidGradleProject() {
-	return fs.existsSync('build.gradle');
+	return fs.existsSync("build.gradle");
 }
 
 function parseGradleTasks(stdout) {
-	const lines = stdout.split('\n');
-	const items = [];
-	const cleanseItems = [];
-	let startingPlace = -1;
-
-	lines.forEach((item, i) => {
-		if (startingPlace > -1 && i <= startingPlace) {
-			return;
+	const lines = stdout.split("\n");
+	let collectTasks = false;
+	const tasks = lines.reduce((acc, line, i) => {
+		if (line.startsWith("All tasks runnable from root project")) {
+			collectTasks = true;
+			return acc;
 		}
-
-		if (item.startsWith('All tasks runnable from root project')) {
-			startingPlace = i + 4;
-			return;
+		if (
+			!collectTasks ||
+			/^\s*$/.test(line) ||
+			line.startsWith("---") ||
+			lines[i + 1]?.startsWith("---")
+		) {
+			return acc;
 		}
+		acc.push(line);
+		return acc;
+	}, []);
 
-		if (startingPlace === -1) {
-			return;
-		}
+	// Add common missing items directly
+	const commonTasks = [
+		"javadoc - Generates Javadoc API documentation for the main source code",
+		"test - Runs the unit tests.",
+		"check - Runs all checks",
+		"dependencies - Displays all dependencies declared in root project ",
+		"wrapper - Generates Gradle wrapper files.",
+		"assemble - Assembles the outputs of this project.",
+		"build - Assembles and tests this project.",
+		"buildDependents - Assembles and tests this project and all projects that depend on it.",
+		"buildNeeded - Assembles and tests this project and all projects it depends on.",
+		"classes - Assembles main classes.",
+		"clean - Deletes the build directory.",
+		"jar - Assembles a jar archive containing the main classes.",
+		"testClasses - Assembles test classes.",
+	];
 
-		if (/^\s*$/.test(item)) {
-			return;
-		}
-
-		const nextLineStartsWithDashes = lines[i + 1].startsWith('---');
-
-		if (item.startsWith('---') || nextLineStartsWithDashes) {
-			return;
-		}
-
-		cleanseItems.push(item);
+	// Combine and map to desired structure
+	return [...tasks, ...commonTasks].map((task) => {
+		const [name, description = ""] = task.split(" - ");
+		return { name, description };
 	});
-
-	// Common missing items
-	cleanseItems.push('javadoc - Generates Javadoc API documentation for the main source code');
-	cleanseItems.push('test - Runs the unit tests.');
-	cleanseItems.push('check - Runs all checks');
-	cleanseItems.push('dependencies - Displays all dependencies declared in root project ');
-	cleanseItems.push('wrapper - Generates Gradle wrapper files.');
-	cleanseItems.push('assemble - Assembles the outputs of this project.');
-	cleanseItems.push('build - Assembles and tests this project.');
-	cleanseItems.push('buildDependents - Assembles and tests this project and all projects that depend on it.');
-	cleanseItems.push('buildNeeded - Assembles and tests this project and all projects it depends on.');
-	cleanseItems.push('classes - Assembles main classes.');
-	cleanseItems.push('clean - Deletes the build directory.');
-	cleanseItems.push('jar - Assembles a jar archive containing the main classes.');
-	cleanseItems.push('testClasses - Assembles test classes.');
-
-	cleanseItems.forEach(item => {
-		const separation = item.split(' - ');
-		const name = separation[0];
-		const description = separation.length === 2 ? separation[1] : '';
-		items.push({name, description});
-	});
-	return items;
 }
 
 function isCacheDirty(previousChecksum, previousGradlrVersion) {
-	return getChecksumOfGradleFiles('.')
-		.then(sum => previousChecksum !== sum || previousGradlrVersion !== pkg.version);
+	return getChecksumOfGradleFiles(".").then(
+		(sum) => previousChecksum !== sum || previousGradlrVersion !== pkg.version
+	);
 }
 
 function getTasksFromCache() {
 	return new Promise((resolve, reject) => {
 		const spinner = ora({
-			color: 'yellow',
-			text: 'Parsing gradle tasks...'
+			color: "yellow",
+			text: "Parsing gradle tasks...",
 		}).start();
 
-		exec('./gradlew -q tasks --all', (error, stdout) => {
+		exec("./gradlew tasks --console=plain", (error, stdout) => {
 			spinner.stop();
 			const items = parseGradleTasks(stdout);
 			if (items.length === 0) {
 				reject(error);
 			} else {
-				getChecksumOfGradleFiles('.')
-					.then(sum => {
-						saveSettings({
-							timestamp: Date.now(),
-							generatedWith: 'https://github.com/cesarferreira/gradlr',
-							checksum: sum,
-							gradlrVersion: pkg.version,
-							payload: items.sort(keysrt('name'))
-						})
-						.then(data => resolve(data.payload));
-					});
+				getChecksumOfGradleFiles(".").then((sum) => {
+					saveSettings({
+						timestamp: Date.now(),
+						generatedWith: "https://github.com/cesarferreira/gradlr",
+						checksum: sum,
+						gradlrVersion: pkg.version,
+						payload: items.sort(keysrt("name")),
+					}).then((data) => resolve(data.payload));
+				});
 			}
 		});
 	});
@@ -178,48 +171,54 @@ function getTasksFromCache() {
 function getTasks() {
 	return new Promise((resolve, reject) => {
 		readSettings()
-				.then(settings => {
-					isCacheDirty(settings.checksum, settings.gradlrVersion)
-						.then(isItDirty => {
-							if (isItDirty) {
-								resetConfig();
-								getTasksFromCache()
-									.then(data => resolve(data))
-									.catch(err => reject(err));
-							} else {
-								resolve(settings.payload);
-							}
-						});
-				})
-				.catch(() => {
-					getTasksFromCache()
-						.then(data => resolve(data))
-						.catch(err => reject(err));
-				});
+			.then((settings) => {
+				isCacheDirty(settings.checksum, settings.gradlrVersion).then(
+					(isItDirty) => {
+						if (isItDirty) {
+							resetConfig();
+							getTasksFromCache()
+								.then((data) => resolve(data))
+								.catch((err) => reject(err));
+						} else {
+							resolve(settings.payload);
+						}
+					}
+				);
+			})
+			.catch(() => {
+				getTasksFromCache()
+					.then((data) => resolve(data))
+					.catch((err) => reject(err));
+			});
 	});
 }
 
 function saveSettings(data) {
 	return new Promise((resolve, reject) => {
-		fs.writeFile(`${SETTINGS_FILE_NAME}.json`, JSON.stringify(data, null, 2), 'utf-8', err => {
-			if (err) {
-				reject(err);
-			} else {
-				resolve(data);
+		fs.writeFile(
+			`${SETTINGS_FILE_NAME}.json`,
+			JSON.stringify(data, null, 2),
+			"utf-8",
+			(err) => {
+				if (err) {
+					reject(err);
+				} else {
+					resolve(data);
+				}
 			}
-		});
+		);
 	});
 }
 
 function readSettings() {
 	return new Promise((resolve, reject) => {
-		fs.readFile(`${SETTINGS_FILE_NAME}.json`, 'utf-8', (err, data) => {
+		fs.readFile(`${SETTINGS_FILE_NAME}.json`, "utf-8", (err, data) => {
 			if (err) {
 				reject(err);
 			} else {
 				promisedParseJSON(data)
-					.then(data => resolve(data))
-					.catch(err => reject(err));
+					.then((data) => resolve(data))
+					.catch((err) => reject(err));
 			}
 		});
 	});
@@ -236,47 +235,60 @@ function promisedParseJSON(json) {
 }
 
 function listAvailableTasks(processes, flags) {
-	inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
-	return inquirer.prompt([{
-		name: 'target',
-		message: 'Available tasks:',
-		type: 'autocomplete',
-		pageSize: 10,
-		source: (answers, input) => Promise.resolve().then(() => filterTasks(input, processes, flags))
-	}])
-	.then(answer => execute(answer));
+	inquirer.registerPrompt(
+		"autocomplete",
+		require("inquirer-autocomplete-prompt")
+	);
+	return inquirer
+		.prompt([
+			{
+				name: "target",
+				message: "Available tasks:",
+				type: "autocomplete",
+				pageSize: 10,
+				source: (answers, input) =>
+					Promise.resolve().then(() => filterTasks(input, processes, flags)),
+			},
+		])
+		.then((answer) => execute(answer));
 }
 
 function execute(task) {
 	const params = [task.target];
 	if (offline) {
-		params.push('--offline');
+		params.push("--offline");
 	}
-	log(`Running: ${chalk.green.bold(params.join(' '))}\n`);
-	spawn('./gradlew', params, {stdio: 'inherit'});
+	log(`Running: ${chalk.green.bold(params.join(" "))}\n`);
+	spawn("./gradlew", params, { stdio: "inherit" });
 }
 
 function checksum(str, algorithm, encoding) {
 	return crypto
-		.createHash(algorithm || 'md5')
-		.update(str, 'utf8')
-		.digest(encoding || 'hex');
+		.createHash(algorithm || "md5")
+		.update(str, "utf8")
+		.digest(encoding || "hex");
 }
 
 function resetConfig() {
-	fs.unlinkSync(`${SETTINGS_FILE_NAME}.json`);
+	const filePath = `${SETTINGS_FILE_NAME}.json`;
+	if (fs.existsSync(filePath)) {
+		fs.unlinkSync(filePath);
+	} else {
+		console.log(`File ${filePath} does not exist.`);
+	}
 }
 
 function getChecksumOfGradleFiles(path) {
-	return fileHound.create()
+	return fileHound
+		.create()
 		.paths(path)
-		.ext('gradle')
+		.ext("gradle")
 		.ignoreHiddenDirectories()
 		.depth(3)
 		.find()
-		.then(files => {
-			let mix = '';
-			files.forEach(file => {
+		.then((files) => {
+			let mix = "";
+			files.forEach((file) => {
 				mix += md5File.sync(file);
 			});
 			return checksum(mix);
@@ -297,20 +309,24 @@ function keysrt(key) {
 
 function filterTasks(input, tasks, flags) {
 	const filters = {
-		name: task => input ? task.name.toLowerCase().includes(input.toLowerCase()) : true,
-		description: task => input ? task.description.toLowerCase().includes(input.toLowerCase()) : true
+		name: (task) =>
+			input ? task.name.toLowerCase().includes(input.toLowerCase()) : true,
+		description: (task) =>
+			input
+				? task.description.toLowerCase().includes(input.toLowerCase())
+				: true,
 	};
 
 	return tasks
 		.filter(flags.description ? filters.description : filters.name)
-		.map(task => {
+		.map((task) => {
 			const lineLength = process.stdout.columns || 80;
 			const margins = commandLineMargins + task.description.toString().length;
 			const length = lineLength - margins;
-			const name = cliTruncate(task.name, length, {position: 'middle'});
+			const name = cliTruncate(task.name, length, { position: "middle" });
 			return {
 				name: `${name} ${chalk.dim(task.description)}`,
-				value: task.name
+				value: task.name,
 			};
 		});
 }
