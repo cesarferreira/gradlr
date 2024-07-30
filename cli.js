@@ -85,7 +85,7 @@ function init(flags) {
 }
 
 function isValidGradleProject() {
-	return fs.existsSync("build.gradle");
+	return fs.existsSync("build.gradle") || fs.existsSync("build.gradle.kts");
 }
 
 function parseGradleTasks(stdout) {
