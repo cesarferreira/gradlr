@@ -31,7 +31,7 @@
         "esc-exit": "^2.0.1",
         "filehound": "^1.16.5",
         "has-flag": "^3.0.0",
-        "inquirer": "^6.2.1",
+        "inquirer": "^14.0.0",
         "inquirer-autocomplete-prompt": "^1.0.1",
         "md5-file": "^4.0.0",
         "meow": "^13.2.0",
